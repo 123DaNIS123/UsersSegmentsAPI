@@ -15,6 +15,6 @@ func main() {
 	}
 	config.Connect()
 	router := gin.New()
-	routes.UserRoute(router)
-	router.Run(":8000")
+	routes.Route(router)
+	router.Run(":8080")
 }

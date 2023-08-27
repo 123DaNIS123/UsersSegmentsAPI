@@ -16,8 +16,10 @@ func Connect() {
 		os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_DB"))
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		print(db)
-		print("!!!!")
+		panic(err)
+	}
+	err = db.SetupJoinTable(&models.User{}, "Segments", &models.UserSegment{})
+	if err != nil {
 		panic(err)
 	}
 	db.AutoMigrate(&models.User{})
