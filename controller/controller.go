@@ -15,7 +15,7 @@ import (
 
 func GetUsers(c *gin.Context) {
 	users := []models.User{}
-	if config.DB.Find(&users) != nil{
+	if config.DB.Find(&users).Error != nil{
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server side error"})
 		return
 	}
@@ -63,12 +63,13 @@ func GetSegment(c *gin.Context) {
 
 func CreateSegment(c *gin.Context) {
 	var segment models.Segment
-	if c.BindJSON(&segment) != nil {
+	if c.BindJSON(&segment) != nil{
 		c.JSON(http.StatusBadRequest, gin.H{"message": "incorrect data"})
 		return
 	}
-	if config.DB.Create(&segment) != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server side error"})
+	// config.DB.Create(&segment)
+	if config.DB.Create(&segment).Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "incorrect data"})
 		return
 	}
 	c.JSON(http.StatusOK, &segment)
@@ -80,8 +81,8 @@ func DeleteSegment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "incorrect data"})
 		return
 	}
-	if config.DB.Where("name = ?", segment.Name).Delete(&segment) != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server side error"})
+	if config.DB.Where("name = ?", segment.Name).Delete(&segment).Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Already deleted"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("%s was deleted", segment.Name)})
@@ -104,7 +105,7 @@ func UpdateSegment(c *gin.Context) {
 type BindMessage struct {
 	SegmentsAdd    []string `json:"segments_add"`
 	SegmentsRemove []string `json:"segments_remove"`
-	UserId         uint     `json:"user_id"`
+	UserID         uint     `json:"user_id"`
 }
 
 func (bm *BindMessage) AddUserSegments() []models.UserSegment {
@@ -118,12 +119,14 @@ func (bm *BindMessage) AddUserSegments() []models.UserSegment {
 			}
 		} else {
 			var user models.User
-			if err := config.DB.Where("id = ?", bm.UserId).First(&user).Error; err != nil {
+			if err := config.DB.Where("id = ?", bm.UserID).First(&user).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					fmt.Printf("no user with given user_id \"%d\"\n", bm.UserId)
+					fmt.Printf("no user with given user_id \"%d\"\n", bm.UserID)
 				}
-			} else {
-				userSegment.UserID = bm.UserId
+			} else if config.DB.Where("user_id = ? AND segment_id = ?", bm.UserID, segment.ID).First(&userSegment).Error == nil{
+				fmt.Printf(" binding between User \"%d\" and Segment \"%d\" \"%s\"already exist\n", bm.UserID, segment.ID, segment.Name)
+			} else{
+				userSegment.UserID = bm.UserID
 				userSegment.SegmentID = segment.ID
 				userSegmentSlice = append(userSegmentSlice, userSegment)
 			}
@@ -142,11 +145,11 @@ func (bm *BindMessage) RemoveUserSegments(c *gin.Context) {
 			}
 		} else {
 			var user models.User
-			if err := config.DB.Where("id = ?", bm.UserId).First(&user).Error; err != nil {
+			if err := config.DB.Where("id = ?", bm.UserID).First(&user).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					fmt.Printf("unregistered user id \"%d\" in user_id\n", bm.UserId)
+					fmt.Printf("unregistered user id \"%d\" in user_id\n", bm.UserID)
 				}
-			} else if err := config.DB.Where("user_id = ? AND segment_id = ?", bm.UserId, segment.ID).Delete(&userSegment).Error; err != nil {
+			} else if err := config.DB.Where("user_id = ? AND segment_id = ?", bm.UserID, segment.ID).Delete(&userSegment).Error; err != nil {
 				c.JSON(555, &userSegment)
 			}
 		}
