@@ -7,13 +7,14 @@ import (
 )
 
 type User struct {
-	ID          uint        `gorm:"primaryKey"`
-	Segments    []Segment   `json:"-" gorm:"many2many:user_segments;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	ID       uint      `gorm:"primaryKey"`
+	Segments []Segment `json:"-" gorm:"many2many:user_segments;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 type Segment struct {
-	ID          uint        `gorm:"primaryKey;"`
-	Name        string      `json:"name" gorm:"uniqueIndex"`
+	ID         uint   `gorm:"primaryKey;"`
+	Name       string `json:"name" gorm:"uniqueIndex"`
+	Percentage uint   `json:"percentage"`
 	// UserSegment UserSegment `gorm:"Foreignkey:SegmentID;"`
 }
 

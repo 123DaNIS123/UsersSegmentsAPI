@@ -68,7 +68,7 @@ func (bm *BindMessage) RemoveUserSegments(c *gin.Context) {
 // Bind             godoc
 // @Summary      Bind and unbind a user with segments
 // @Description  Takes in JSON "segments_add" list, "segments_remove" list and "user_id". Return created User-Segment binds
-// @Tags         userSegment
+// @Tags         UserSegment
 // @Produce      json
 // @Param        segments_add formData array false "array of segments that you want to add"
 // @Param        segments_remove formData array false "array of segments that you want to remove"
@@ -99,4 +99,31 @@ func GetBinds(c *gin.Context) {
 	userSegments := []models.UserSegment{}
 	config.DB.Find(&userSegments)
 	c.JSON(http.StatusOK, &userSegments)
+}
+
+type UserRequest struct {
+	ID uint `json:"user_id"`
+}
+
+// UserBinds             godoc
+// @Summary      Show certain user's segment binds
+// @Description  Takes in JSON "user_id" to show the user's segment binds.
+// @Tags         UserSegment
+// @Produce      json
+// @Param        user_id formData int true "show segment binds of user with given id"
+// @Success      200
+// @Router       /userbinds [post]
+func GetUserBinds(c *gin.Context) {
+	var user UserRequest
+	var segments []models.Segment
+	c.BindJSON(&user)
+	if err := config.DB.Table("user_segments").
+		Where("user_id = ? AND deleted_at IS NULL", user.ID).
+		Order("segment_id asc").Joins("join segments on segments.id = user_segments.segment_id").
+		Select("segments.id", "segments.name").
+		Find(&segments).Error; err != nil {
+		c.JSON(http.StatusBadRequest, &segments)
+		return
+	}
+	c.JSON(http.StatusOK, &segments)
 }

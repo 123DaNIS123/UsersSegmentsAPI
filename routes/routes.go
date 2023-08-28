@@ -27,4 +27,6 @@ func Route(router *gin.Engine) {
 
 	router.POST("/bind", controller.Bind)
 	router.GET("/binds", controller.GetBinds)
+	router.POST("/userbinds", controller.GetUserBinds)
+	router.POST("/timedata", controller.GetTimeData)
 }

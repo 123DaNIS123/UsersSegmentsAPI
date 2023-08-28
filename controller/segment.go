@@ -41,7 +41,8 @@ func GetSegment(c *gin.Context) {
 // @Description  Takes in JSON "name" of segment that you want to create.
 // @Tags         segments
 // @Produce      json
-// @Param        name body string true "Segment name"
+// @Param        name formData string true "Segment name"
+// @Param        percentage formData int false "Percentage of users that will be added to this segment"
 // @Success      200 {object} models.Segment
 // @Router       /segment [post]
 func CreateSegment(c *gin.Context) {
@@ -54,6 +55,9 @@ func CreateSegment(c *gin.Context) {
 	if config.DB.Create(&segment).Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "incorrect data"})
 		return
+	}
+	if segment.Percentage > 0 {
+		userSequence(c, segment.Percentage, segment.Name)
 	}
 	c.JSON(http.StatusOK, &segment)
 }
@@ -79,7 +83,7 @@ func DeleteSegment(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("%s was deleted", segment.Name)})
 }
 
-// DeleteSegment             godoc
+// UpdateSegment             godoc
 // @Summary      Update a segment
 // @Description  Takes in JSON "name" you want to change the segment to.
 // @Tags         segments
