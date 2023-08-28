@@ -55,7 +55,6 @@
 
 Pretty good REST API for Users Segments service. You can add users and segments. You can connect users to segments. You can add users to created segments automatically by writing the percentage of users you need and etc.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
@@ -70,7 +69,6 @@ REST API built on Golang with Gin framework and Gorm ORM, docs added with Swagge
 * [Swagger](https://github.com/swaggo/gin-swagger)
 * [PostgreSQL](https://www.postgresql.org/)
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
@@ -199,8 +197,6 @@ ____
     ____
 
 
-
-<p align="right">(<a href="#readme-docs">back to docs</a>)</p>
 
 
 
