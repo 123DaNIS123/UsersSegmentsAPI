@@ -10,4 +10,17 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - ./data/db:/var/lib/postgresql/data
-    
+  web:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/usr/src/app
+    environment:
+      - POSTGRES_HOST=host.docker.internal
+    command: air main.go -b 0.0.0.0
+
+volumes:
+  postgres-db:

@@ -3,9 +3,15 @@ package routes
 import (
 	"github.com/123DaNIS123/UsersSegments/controller"
 	"github.com/gin-gonic/gin"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func Route(router *gin.Engine) {
+	//add swagger
+	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	router.GET("/users", controller.GetUsers)
 	router.POST("/user", controller.CreateUser)
 	router.DELETE("/user/:id", controller.DeleteUser)

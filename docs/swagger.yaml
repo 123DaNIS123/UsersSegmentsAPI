@@ -1,0 +1,225 @@
+basePath: /
+definitions:
+  models.Segment:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.User:
+    properties:
+      id:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: danisnizamutdinov1@gmail.com
+    name: Danis Nizamutdinov
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: User Segments API
+  version: "1.0"
+paths:
+  /bind:
+    post:
+      description: Takes in JSON "segments_add" list, "segments_remove" list and "user_id".
+        Return created User-Segment binds
+      parameters:
+      - description: array of segments that you want to add
+        in: formData
+        name: segments_add
+        type: array
+      - description: array of segments that you want to remove
+        in: formData
+        name: segments_remove
+        type: array
+      - description: user id that you want to add
+        in: formData
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Bind and unbind a user with segments
+      tags:
+      - userSegment
+  /binds:
+    get:
+      description: Get all User-Segment binds
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Get all binds
+      tags:
+      - UserSegment
+  /segment:
+    delete:
+      description: Takes in JSON "name" of segment that you want to delete.
+      parameters:
+      - description: Segment name
+        in: body
+        name: name
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Segment'
+      summary: Delete a segment
+      tags:
+      - segments
+    post:
+      description: Takes in JSON "name" of segment that you want to create.
+      parameters:
+      - description: Segment name
+        in: body
+        name: name
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Segment'
+      summary: Create a segment
+      tags:
+      - segments
+  /segment/:id:
+    get:
+      description: Takes segment id as a parameter.
+      parameters:
+      - description: Segment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Segment'
+      summary: Get a segment by id
+      tags:
+      - segments
+    put:
+      description: Takes in JSON "name" you want to change the segment to.
+      parameters:
+      - description: Segment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Segment name
+        in: formData
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Segment'
+      summary: Update a segment
+      tags:
+      - segments
+  /segments:
+    get:
+      description: Responds with the list of all segments as JSON.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Segment'
+            type: array
+      summary: Get segments array
+      tags:
+      - segments
+  /user:
+    post:
+      description: Takes no arguments.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      summary: Create a new user
+      tags:
+      - users
+  /user/:id:
+    delete:
+      description: Takes user id that you want to delete.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      summary: Delete a user
+      tags:
+      - users
+    put:
+      description: Takes user id that you want to change as a parameter and in json
+        user id as "id" that you want to change to.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      summary: Change user id
+      tags:
+      - users
+  /users:
+    get:
+      description: Responds with the list of all users as JSON.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+      summary: Get users array
+      tags:
+      - users
+swagger: "2.0"
