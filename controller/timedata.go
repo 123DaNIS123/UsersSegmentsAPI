@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/123DaNIS123/UsersSegments/db"
+	"github.com/123DaNIS123/UsersSegments/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -63,29 +64,19 @@ func GetTimeData(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, "key \"month\" not correct")
 		return
 	}
+	histories := make([]models.History, 0)
+
+	tmpUserSegments := make([]models.UserSegment, 0)
+	db.DB.Model(&models.UserSegment{}).Find(&tmpUserSegments)
+
 	userSegments := make([]Data, 0)
 	db.DB.Table("user_segments").Find(&userSegments)
-	if err := db.DB.Table("user_segments").Unscoped().
-		Select("user_segments.user_id", "user_segments.segment_id", "user_segments.created_at", "user_segments.deleted_at", "segments.name").
-		Joins("join segments on segments.id = user_segments.segment_id").
-		Where("(EXTRACT('Year' FROM created_at) = ? AND EXTRACT('Month' FROM created_at) = ?) OR (EXTRACT('Year' FROM deleted_at) = ? AND EXTRACT('Month' FROM deleted_at) = ?)",
-			yearMonth.Year,
-			yearMonth.Month,
-			yearMonth.Year,
-			yearMonth.Month).
-		Find(&userSegments).Error; err != nil {
-		c.JSON(http.StatusBadRequest, &userSegments)
+	if r := db.DB.Model(&models.History{}).Where("(EXTRACT('Year' FROM timestamp) = ? AND EXTRACT('Month' FROM timestamp) = ?)",
+		yearMonth.Year,
+		yearMonth.Month).
+		Find(&histories); r.RowsAffected == 0 {
+		c.String(http.StatusOK, "no data in this period")
 	} else {
-		histories := make([]History, 0)
-		for _, v := range userSegments {
-			history := History{v.UserID, v.SegmentID, v.SegmentName, Operation(Create), v.CreatedAt.UTC()}
-			histories = append(histories, history)
-			if v.DeletedAt.Valid {
-				history.Operation = Operation(Delete)
-				history.Timestamp = v.DeletedAt.Time.UTC()
-				histories = append(histories, history)
-			}
-		}
 		sort.Slice(histories, func(i, j int) bool {
 			return histories[i].Timestamp.Before(histories[i].Timestamp)
 		})
@@ -103,14 +94,14 @@ func GetTimeData(c *gin.Context) {
 		defer writer.Flush()
 		headers := []string{"N", "UserID", "SegmentId", "SegmentName", "Operation", "Timestamp"}
 		writer.Write(headers)
-		for i, history := range histories {
+		for _, history := range histories {
 			row := []string{
-				strconv.Itoa(i),
+				strconv.Itoa(int(history.ID)),
 				strconv.FormatUint(uint64(history.UserID), 10),
 				strconv.FormatUint(uint64(history.SegmentID), 10),
-				history.Segment,
-				string(history.Operation),
-				history.Timestamp.Format("02.01.2006 15:04:05"),
+				history.SegmentName,
+				history.Operation,
+				history.Timestamp.Format(time.RFC3339),
 			}
 			if err := writer.Write(row); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"Error:": err.Error()})

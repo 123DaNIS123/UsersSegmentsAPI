@@ -47,19 +47,24 @@ func GetSegment(c *gin.Context) {
 // @Router       /segment [post]
 func CreateSegment(c *gin.Context) {
 	var segment models.Segment
-	if c.BindJSON(&segment) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "incorrect data"})
+	// c.BindJSON(&segment)
+	if err := c.BindJSON(&segment); err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
-	// db.DB.Create(&segment)
-	if db.DB.Create(&segment).Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "incorrect data"})
+	var tempSegment models.Segment
+	if r := db.DB.Model(&models.Segment{}).Where("name = ?", segment.Name).Limit(1).Find(&tempSegment); r.RowsAffected > 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"Message": "Segment with such name already exists"})
 		return
 	}
+	db.DB.Create(&segment)
 	if segment.Percentage > 0 {
+
+		tmpUserSegments := make([]models.UserSegment, 0)
+		db.DB.Model(&models.UserSegment{}).Find(&tmpUserSegments)
+
 		userSequence(c, segment.Percentage, segment.Name)
 	}
-	c.JSON(http.StatusCreated, &segment)
 }
 
 // DeleteSegment             godoc
@@ -94,6 +99,7 @@ func DeleteSegment(c *gin.Context) {
 // @Router       /segment/:id [put]
 func UpdateSegment(c *gin.Context) {
 	var segment models.Segment
+
 	db.DB.Where("id = ?", c.Param("id")).First(&segment)
 	if c.BindJSON(&segment) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "incorrect data"})

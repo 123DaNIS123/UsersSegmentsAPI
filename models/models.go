@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -19,13 +20,27 @@ type Segment struct {
 }
 
 type UserSegment struct {
-	UserID    uint `gorm:"primaryKey"`
-	SegmentID uint `gorm:"primaryKey"`
-	CreatedAt time.Time
-	DeletedAt gorm.DeletedAt
+	UserID    uint `gorm:"primaryKey;column:user_id"`
+	SegmentID uint `gorm:"primaryKey;column:segment_id"`
+	TTL       time.Duration
+	CreatedAt time.Time `json:"created_at"`
 }
 
-// func (usersegment *UserSegment) BeforeCreate(tx *gorm.DB) (err error) {
-// 	// if usersegment.UserID.exist
-// 	return
-// }
+type History struct {
+	ID          uint      `json:"id" gorm:"primarykey;column:id"`
+	UserID      uint      `json:"user_id" gorm:"column:user_id"`
+	SegmentID   uint      `json:"segment_id" gorm:"column:segment_id"`
+	SegmentName string    `json:"segment_name" gorm:"column:segment_name"`
+	Operation   string    `json:"operation" gorm:"column:operation"`
+	Timestamp   time.Time `json:"timestamp" gorm:"primarykey;column:timestamp"`
+}
+
+func (v UserSegment) AfterFind(tx gorm.DB) (err error) {
+	currentTime := time.Now()
+	fmt.Printf("CreatedAt: %v; ExpireTime: %v; CurrentTime: %v", v.CreatedAt, v.CreatedAt.Add(v.TTL), time.Now())
+	if currentTime.After(v.CreatedAt.Add(v.TTL)) && v.TTL != 0 {
+		err = tx.Delete(v).Error
+	}
+	// fmt.Println(v)
+	return err
+}
