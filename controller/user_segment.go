@@ -117,6 +117,7 @@ func GetUserBinds(c *gin.Context) {
 	var user UserRequest
 	var segments []models.Segment
 	c.BindJSON(&user)
+	fmt.Printf("w.Body: %v\n", &user)
 	if err := db.DB.Table("user_segments").
 		Where("user_id = ? AND deleted_at IS NULL", user.ID).
 		Order("segment_id asc").Joins("join segments on segments.id = user_segments.segment_id").

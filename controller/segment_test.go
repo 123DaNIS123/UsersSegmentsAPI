@@ -1,8 +1,12 @@
 package controller
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
-	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/123DaNIS123/UsersSegments/db"
@@ -11,38 +15,55 @@ import (
 	"github.com/go-playground/assert/v2"
 )
 
-func TestGetSegments(t *testing.T) {
-	t.Skip("skipping")
+func TestCreateSegment(t *testing.T) { //POST
+	InitDB()
 	router := gin.Default()
-	router.GET("/segments", GetSegments)
-	req, err := http.NewRequest("GET", "/segments", nil)
-	if err != nil {
-		t.Fatalf("error creating request: %s", err.Error())
-	}
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, 200, w.Code)
-
-	// expected := []models.Segment{}
-	// config.DB.Find(&expected)
-	// assert.Equal(t, expected, w.Body.Bytes())
+	InitRoutes(router)
+	var jsonStr = []byte(`{"name": "SEGMENT_20"}`) // if passed segment not created returns 201
+	w := MakeRequest(http.MethodPost, "/segment", bytes.NewReader(jsonStr), router, true)
+	fmt.Printf("w.Body: %v\n", w.Body.String())
+	assert.Equal(t, http.StatusCreated, w.Code)
 }
 
-func TestGetSegment(t *testing.T) {
-	t.Skip("Skipping testing in CI environment")
+func TestDeleteSegment(t *testing.T) { //DELETE
+	InitDB()
 	router := gin.Default()
-	router.GET("/segment/:id", GetSegments)
-	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/segment/1", nil)
+	InitRoutes(router)
+	var jsonStr = []byte(`{"name": "AVITO_SEGMENT_3"}`)
+	w := MakeRequest(http.MethodDelete, "/segment", bytes.NewReader(jsonStr), router, true)
+	fmt.Printf("w.Body: %v\n", w.Body.String())
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestGetSegments(t *testing.T) { //GET
+	InitDB()
+	router := gin.Default()
+	InitRoutes(router)
+	mockResponse := []models.Segment{}
+	db.DB.Find(&mockResponse)
+	mockResponseJSON, err := json.Marshal(mockResponse)
 	if err != nil {
-		t.Fatalf("error creating request: %s", err.Error())
+		log.Fatalf("error when marshaling %s", err.Error())
 	}
-	router.ServeHTTP(w, req)
+	w := MakeRequest(http.MethodGet, "/segments", nil, router, true)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, w.Body.String(), string(mockResponseJSON))
+}
 
-	assert.Equal(t, 200, w.Code)
-
-	expected := []models.Segment{}
-	db.DB.First(&expected, 1)
-	assert.Equal(t, expected, w.Body.Bytes())
+func TestGetSegment(t *testing.T) { //GET
+	InitDB()
+	router := gin.Default()
+	InitRoutes(router)
+	var mockResponse models.Segment
+	db.DB.Where("id = ?", 5).First(&mockResponse)
+	mockResponseJSON, err := json.Marshal(mockResponse)
+	if err != nil {
+		log.Fatalf("error when marshaling mock response%s", err.Error())
+	}
+	var paramStr = "id=5"
+	w := MakeRequest(http.MethodGet, "/segment/5", strings.NewReader(paramStr), router, false)
+	fmt.Printf("w.Body: %v\n", w.Body.String())
+	fmt.Printf("mockResponseJSON: %v\n", string(mockResponseJSON))
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, w.Body.String(), string(mockResponseJSON))
 }

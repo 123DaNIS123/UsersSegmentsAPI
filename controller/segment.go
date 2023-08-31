@@ -59,7 +59,7 @@ func CreateSegment(c *gin.Context) {
 	if segment.Percentage > 0 {
 		userSequence(c, segment.Percentage, segment.Name)
 	}
-	c.JSON(http.StatusOK, &segment)
+	c.JSON(http.StatusCreated, &segment)
 }
 
 // DeleteSegment             godoc
