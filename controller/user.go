@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/123DaNIS123/UsersSegments/config"
+	"github.com/123DaNIS123/UsersSegments/db"
 	"github.com/123DaNIS123/UsersSegments/models"
 	"github.com/gin-gonic/gin"
 )
@@ -20,7 +20,7 @@ import (
 // @Router       /users [get]
 func GetUsers(c *gin.Context) {
 	users := []models.User{}
-	if config.DB.Find(&users).Error != nil {
+	if db.DB.Find(&users).Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server side error"})
 		return
 	}
@@ -36,7 +36,7 @@ func GetUsers(c *gin.Context) {
 // @Router       /user [post]
 func CreateUser(c *gin.Context) {
 	var user models.User
-	config.DB.Create(&user)
+	db.DB.Create(&user)
 	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("User %d was createdd", user.ID)})
 }
 
@@ -50,7 +50,7 @@ func CreateUser(c *gin.Context) {
 // @Router       /user/:id [delete]
 func DeleteUser(c *gin.Context) {
 	var user models.User
-	config.DB.Where("id = ?", c.Param("id")).Delete(&user)
+	db.DB.Where("id = ?", c.Param("id")).Delete(&user)
 	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("User %d was deleted", user.ID)})
 }
 
@@ -64,8 +64,8 @@ func DeleteUser(c *gin.Context) {
 // @Router       /user/:id [put]
 func UpdateUser(c *gin.Context) {
 	var user models.User
-	config.DB.Where("id = ?", c.Param("id")).First(&user)
+	db.DB.Where("id = ?", c.Param("id")).First(&user)
 	c.BindJSON(&user)
-	config.DB.Save(&user)
+	db.DB.Save(&user)
 	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("User %s's id was updated to %d", c.Param("id"), user.ID)})
 }

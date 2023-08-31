@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/123DaNIS123/UsersSegments/config"
+	"github.com/123DaNIS123/UsersSegments/db"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -64,8 +64,8 @@ func GetTimeData(c *gin.Context) {
 		return
 	}
 	userSegments := make([]Data, 0)
-	config.DB.Table("user_segments").Find(&userSegments)
-	if err := config.DB.Table("user_segments").Unscoped().
+	db.DB.Table("user_segments").Find(&userSegments)
+	if err := db.DB.Table("user_segments").Unscoped().
 		Select("user_segments.user_id", "user_segments.segment_id", "user_segments.created_at", "user_segments.deleted_at", "segments.name").
 		Joins("join segments on segments.id = user_segments.segment_id").
 		Where("(EXTRACT('Year' FROM created_at) = ? AND EXTRACT('Month' FROM created_at) = ?) OR (EXTRACT('Year' FROM deleted_at) = ? AND EXTRACT('Month' FROM deleted_at) = ?)",

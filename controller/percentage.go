@@ -3,7 +3,7 @@ package controller
 import (
 	"net/http"
 
-	"github.com/123DaNIS123/UsersSegments/config"
+	"github.com/123DaNIS123/UsersSegments/db"
 	"github.com/123DaNIS123/UsersSegments/models"
 	"github.com/gin-gonic/gin"
 )
@@ -11,13 +11,13 @@ import (
 func userSequence(c *gin.Context, percentage uint, segmentName string) {
 	var allUsersAmount int64
 	var users []models.User
-	config.DB.Table("users").Count(&allUsersAmount)
+	db.DB.Table("users").Count(&allUsersAmount)
 	limitUserAmount := int((float64(percentage) / 100.0) * float64(allUsersAmount))
 	if limitUserAmount == 0 {
 		c.JSON(http.StatusBadRequest, "low percentage amount")
 		return
 	}
-	if err := config.DB.Table("users").Order("random()").Limit(limitUserAmount).Find(&users).Error; err != nil {
+	if err := db.DB.Table("users").Order("random()").Limit(limitUserAmount).Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, &users)
 		return
 	}
@@ -28,7 +28,7 @@ func userSequence(c *gin.Context, percentage uint, segmentName string) {
 		userSegmentsSlice = append(userSegmentsSlice, bindMessage.AddUserSegments()[0])
 	}
 	if len(userSegmentsSlice) != 0 {
-		config.DB.Save(&userSegmentsSlice)
+		db.DB.Save(&userSegmentsSlice)
 	}
 	c.JSON(http.StatusOK, &userSegmentsSlice)
 }

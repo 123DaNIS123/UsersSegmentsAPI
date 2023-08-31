@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/123DaNIS123/UsersSegments/config"
+	"github.com/123DaNIS123/UsersSegments/db"
 	"github.com/123DaNIS123/UsersSegments/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -22,17 +22,17 @@ func (bm *BindMessage) AddUserSegments() []models.UserSegment {
 	for _, v := range bm.SegmentsAdd {
 		var userSegment models.UserSegment
 		var segment models.Segment
-		if err := config.DB.Where("name = ?", v).First(&segment).Error; err != nil {
+		if err := db.DB.Where("name = ?", v).Find(&segment).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				fmt.Printf("incorrect name \"%s\" in segments_add\n", v)
 			}
 		} else {
 			var user models.User
-			if err := config.DB.Where("id = ?", bm.UserID).First(&user).Error; err != nil {
+			if err := db.DB.Where("id = ?", bm.UserID).Find(&user).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					fmt.Printf("no user with given user_id \"%d\"\n", bm.UserID)
 				}
-			} else if config.DB.Where("user_id = ? AND segment_id = ?", bm.UserID, segment.ID).First(&userSegment).Error == nil {
+			} else if db.DB.Where("user_id = ? AND segment_id = ?", bm.UserID, segment.ID).Find(&userSegment).Error == nil {
 				fmt.Printf(" binding between User \"%d\" and Segment \"%d\" \"%s\"already exist\n", bm.UserID, segment.ID, segment.Name)
 			} else {
 				userSegment.UserID = bm.UserID
@@ -48,17 +48,17 @@ func (bm *BindMessage) RemoveUserSegments(c *gin.Context) {
 	for _, v := range bm.SegmentsRemove {
 		var userSegment models.UserSegment
 		var segment models.Segment
-		if err := config.DB.Where("name = ?", v).First(&segment).Error; err != nil {
+		if err := db.DB.Where("name = ?", v).First(&segment).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				fmt.Printf("incorrect name \"%s\" in segments_add\n", v)
 			}
 		} else {
 			var user models.User
-			if err := config.DB.Where("id = ?", bm.UserID).First(&user).Error; err != nil {
+			if err := db.DB.Where("id = ?", bm.UserID).Find(&user).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					fmt.Printf("unregistered user id \"%d\" in user_id\n", bm.UserID)
 				}
-			} else if err := config.DB.Where("user_id = ? AND segment_id = ?", bm.UserID, segment.ID).Delete(&userSegment).Error; err != nil {
+			} else if err := db.DB.Where("user_id = ? AND segment_id = ?", bm.UserID, segment.ID).Delete(&userSegment).Error; err != nil {
 				c.JSON(555, &userSegment)
 			}
 		}
@@ -80,7 +80,7 @@ func Bind(c *gin.Context) {
 	c.BindJSON(&bindMessage)
 	userSegmentsSlice := bindMessage.AddUserSegments()
 	if len(userSegmentsSlice) != 0 {
-		config.DB.Save(&userSegmentsSlice)
+		db.DB.Save(&userSegmentsSlice)
 	}
 	if len(bindMessage.SegmentsRemove) != 0 {
 		bindMessage.RemoveUserSegments(c)
@@ -97,7 +97,7 @@ func Bind(c *gin.Context) {
 // @Router       /binds [get]
 func GetBinds(c *gin.Context) {
 	userSegments := []models.UserSegment{}
-	config.DB.Find(&userSegments)
+	db.DB.Find(&userSegments)
 	c.JSON(http.StatusOK, &userSegments)
 }
 
@@ -117,10 +117,10 @@ func GetUserBinds(c *gin.Context) {
 	var user UserRequest
 	var segments []models.Segment
 	c.BindJSON(&user)
-	if err := config.DB.Table("user_segments").
+	if err := db.DB.Table("user_segments").
 		Where("user_id = ? AND deleted_at IS NULL", user.ID).
 		Order("segment_id asc").Joins("join segments on segments.id = user_segments.segment_id").
-		Select("segments.id", "segments.name").
+		Select("segments.id", "segments.name", "segments.percentage").
 		Find(&segments).Error; err != nil {
 		c.JSON(http.StatusBadRequest, &segments)
 		return

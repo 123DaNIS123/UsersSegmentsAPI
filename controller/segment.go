@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/123DaNIS123/UsersSegments/config"
+	"github.com/123DaNIS123/UsersSegments/db"
 	"github.com/123DaNIS123/UsersSegments/models"
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +18,7 @@ import (
 // @Router       /segments [get]
 func GetSegments(c *gin.Context) {
 	segments := []models.Segment{}
-	config.DB.Find(&segments)
+	db.DB.Find(&segments)
 	c.JSON(http.StatusOK, &segments)
 }
 
@@ -32,7 +32,7 @@ func GetSegments(c *gin.Context) {
 // @Router       /segment/:id [get]
 func GetSegment(c *gin.Context) {
 	var segment models.Segment
-	config.DB.Where("id = ?", c.Param("id")).First(&segment)
+	db.DB.Where("id = ?", c.Param("id")).First(&segment)
 	c.JSON(http.StatusOK, &segment)
 }
 
@@ -51,8 +51,8 @@ func CreateSegment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "incorrect data"})
 		return
 	}
-	// config.DB.Create(&segment)
-	if config.DB.Create(&segment).Error != nil {
+	// db.DB.Create(&segment)
+	if db.DB.Create(&segment).Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "incorrect data"})
 		return
 	}
@@ -76,7 +76,7 @@ func DeleteSegment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "incorrect data"})
 		return
 	}
-	if config.DB.Where("name = ?", segment.Name).Delete(&segment).Error != nil {
+	if db.DB.Where("name = ?", segment.Name).Delete(&segment).Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Already deleted"})
 		return
 	}
@@ -94,11 +94,11 @@ func DeleteSegment(c *gin.Context) {
 // @Router       /segment/:id [put]
 func UpdateSegment(c *gin.Context) {
 	var segment models.Segment
-	config.DB.Where("id = ?", c.Param("id")).First(&segment)
+	db.DB.Where("id = ?", c.Param("id")).First(&segment)
 	if c.BindJSON(&segment) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "incorrect data"})
 		return
 	}
-	config.DB.Save(&segment)
+	db.DB.Save(&segment)
 	c.JSON(http.StatusOK, &segment)
 }
